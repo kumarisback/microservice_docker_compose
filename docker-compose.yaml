@@ -1,0 +1,75 @@
+version: '3.7'
+services:
+  naming-server: 
+    image: kumarisbeck/micro-naming-server:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    ports:
+    - "8761:8761"
+    networks:
+      - eureka-network
+    
+  apigateway: 
+    image: kumarisbeck/micro-apigateway:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    ports:
+    - "8080:8080"
+    networks:
+      - eureka-network
+    depends_on:
+      - naming-server
+    environment:
+      - MANAGEMENT.ZIPKIN.TRACING.ENDPOINT= http://zipkin-server:9411/api/v2/spans
+      - EUREKA.CLIENT.SERVICEURL.DEFAULTZONE= http://naming-server:8761/eureka
+      - SPRING.ZIPKIN.BASE-URL=http://zipkin-server:9411
+      
+  demo1: 
+    image: kumarisbeck/micro-serviceone:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    ports:
+    - "8081:8081"
+    networks:
+      - eureka-network
+    depends_on:
+      - naming-server
+    environment:
+      - MANAGEMENT.ZIPKIN.TRACING.ENDPOINT= http://zipkin-server:9411/api/v2/spans1
+      - EUREKA.CLIENT.SERVICEURL.DEFAULTZONE= http://naming-server:8761/eureka
+      - SPRING.ZIPKIN.BASE-URL=http://zipkin-server:9411
+  zipkin-server:
+    image: openzipkin/zipkin
+    mem_limit: 300m
+    ports:
+      - "9411:9411"
+    networks:
+      - eureka-network
+    restart: always #Restart if there is a problem starting up
+  demo2: 
+    image: kumarisbeck/micro-servicetwo:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    ports:
+    - "8082:8082"
+    networks:
+      - eureka-network
+    depends_on:
+      - naming-server
+    environment:
+      - MANAGEMENT.ZIPKIN.TRACING.ENDPOINT= http://zipkin-server:9411/api/v2/spans1
+      - EUREKA.CLIENT.SERVICEURL.DEFAULTZONE= http://naming-server:8761/eureka
+      - SPRING.ZIPKIN.BASE-URL=http://zipkin-server:9411
+  config: 
+    image: kumarisbeck/micro-config:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    ports:
+    - "8888:8888"
+    networks:
+      - eureka-network
+    depends_on:
+      - naming-server
+    environment:
+      - EUREKA.CLIENT.SERVICEURL.DEFAULTZONE= http://naming-server:8761/eureka
+networks:
+  eureka-network:
+
+  
+
+
